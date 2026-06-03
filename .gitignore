@@ -1,0 +1,31 @@
+# Environment
+.venv/
+
+# Python
+__pycache__/
+*.pyc
+
+# Models
+models/*.pkl
+models/*.joblib
+models/*.onnx
+
+# Datasets
+datasets/
+
+# Experiments
+mlruns/
+
+# Logs
+logs/
+
+# Backups
+backups/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

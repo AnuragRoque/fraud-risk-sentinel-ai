@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sentinelstream-config
+  labels:
+    app.kubernetes.io/name: sentinelstream
+data:
+  KAFKA_BOOTSTRAP_SERVERS: "sentinel-kafka:9092"
+  KAFKA_RAW_TOPIC: "transactions.raw"
+  KAFKA_ALERT_TOPIC: "fraud.alerts"
+  KAFKA_DLQ_TOPIC: "deadletter.transactions"
+  RISK_HIGH_THRESHOLD: "0.70"
+  RISK_MEDIUM_THRESHOLD: "0.40"
+  LOG_LEVEL: "INFO"

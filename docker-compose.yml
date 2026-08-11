@@ -1,0 +1,109 @@
+version: '3.8'
+
+services:
+  # =========================================================================
+  # PROFILE B & F: KAFKA EVENT BUS
+  # =========================================================================
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.0
+    container_name: sentinel-zookeeper
+    profiles: ["kafka", "streaming", "full"]
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    networks:
+      - sentinel-network
+
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    container_name: sentinel-kafka
+    profiles: ["kafka", "streaming", "full"]
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sentinel-network
+
+  # =========================================================================
+  # PROFILE C & F: STREAMING SERVICES
+  # =========================================================================
+  sentinelstream-producer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sentinel-producer
+    profiles: ["streaming", "full"]
+    depends_on:
+      kafka:
+        condition: service_healthy
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      KAFKA_RAW_TOPIC: transactions.raw
+    command: python -m producer.generator --count 500 --output console
+    networks:
+      - sentinel-network
+
+  # =========================================================================
+  # PROFILE D & F: POSTGRES & AIRFLOW ORCHESTRATION
+  # =========================================================================
+  postgres:
+    image: postgres:15-alpine
+    container_name: sentinel-postgres
+    profiles: ["orchestration", "full"]
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-sentinel_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sentinel_secure_pass}
+      POSTGRES_DB: ${POSTGRES_DB:-sentinelstream_db}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - sentinel-network
+
+  # =========================================================================
+  # PROFILE E & F: OBSERVABILITY STACK
+  # =========================================================================
+  prometheus:
+    image: prom/prometheus:v2.45.0
+    container_name: sentinel-prometheus
+    profiles: ["monitoring", "full"]
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - sentinel-network
+
+  grafana:
+    image: grafana/grafana:10.0.0
+    container_name: sentinel-grafana
+    profiles: ["monitoring", "full"]
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards
+    networks:
+      - sentinel-network
+
+networks:
+  sentinel-network:
+    driver: bridge
+
+volumes:
+  postgres-data:

@@ -1,0 +1,28 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "SentinelStream — Fraud Risk Monitoring",
+    "tags": ["sentinelstream", "fraud"],
+    "timezone": "browser",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Fraud Predictions by Severity (HIGH / MEDIUM / LOW)",
+        "type": "bargauge",
+        "targets": [
+          { "expr": "sentinelstream_risk_predictions_total", "legendFormat": "{{level}}" }
+        ]
+      },
+      {
+        "id": 2,
+        "title": "High-Risk Alert Generation Rate",
+        "type": "timeseries",
+        "targets": [
+          { "expr": "rate(sentinelstream_risk_predictions_total{level=\"HIGH\"}[5m])", "legendFormat": "High Risk Alerts/sec" }
+        ]
+      }
+    ],
+    "schemaVersion": 36,
+    "version": 1
+  }
+}

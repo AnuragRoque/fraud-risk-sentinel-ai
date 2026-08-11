@@ -1,0 +1,37 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "SentinelStream — System Health & Streaming Performance",
+    "tags": ["sentinelstream", "operational"],
+    "timezone": "browser",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Event Throughput (Produced vs Consumed)",
+        "type": "timeseries",
+        "targets": [
+          { "expr": "rate(sentinelstream_events_produced_total[1m])", "legendFormat": "Produced Events/sec" },
+          { "expr": "rate(sentinelstream_events_consumed_total[1m])", "legendFormat": "Consumed Events/sec" }
+        ]
+      },
+      {
+        "id": 2,
+        "title": "Micro-Batch Processing Latency (ms)",
+        "type": "gauge",
+        "targets": [
+          { "expr": "sentinelstream_processing_latency_ms", "legendFormat": "Avg Latency (ms)" }
+        ]
+      },
+      {
+        "id": 3,
+        "title": "Failed / DLQ Events Total",
+        "type": "stat",
+        "targets": [
+          { "expr": "sentinelstream_failed_events_total", "legendFormat": "Failed Events" }
+        ]
+      }
+    ],
+    "schemaVersion": 36,
+    "version": 1
+  }
+}
